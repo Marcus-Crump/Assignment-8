@@ -72,7 +72,6 @@ class Keyboard:
         self.rows = ["qwertyuiop", "asdfghjkl", "zxcvbnm"]
         self.colors = {letter: NO_COLOR for letter in "qwertyuiopasdfghjklzxcvbnm"}
 
-    # TODO: Modify this method. You may delete this comment when you are done.
     def update(self, feedback_colors, guessed_word):
         """
         Updates the color of each letter on the keyboard based on feedback from a guessed word.
@@ -100,13 +99,9 @@ class Keyboard:
                 if feedback_colors[i] == CORRECT_COLOR:
                     char_dict[char] = feedback_colors[i]
                 else:
-                    if (feedback_colors[i] == WRONG_SPOT_COLOR
-                        and char_dict[char] != CORRECT_COLOR):
+                    if (char_dict[char] != CORRECT_COLOR
+                    and char_dict[char] != WRONG_SPOT_COLOR):
                         char_dict[char] = feedback_colors[i]
-                    elif (feedback_colors[i] != WRONG_SPOT_COLOR
-                        and char_dict[char] != WRONG_SPOT_COLOR):
-                        char_dict[char] = feedback_colors[i]
-
 
         for key,val in char_dict.items():
             if self.colors[key] != CORRECT_COLOR:
@@ -116,8 +111,6 @@ class Keyboard:
                     if self.colors[key] != WRONG_SPOT_COLOR:
                         self.colors[key] = val
 
-
-    # TODO: Modify this method. You may delete this comment when you are done.
     def __str__(self):
         """
         Returns a string representation of the keyboard, showing each letter in its
@@ -135,13 +128,25 @@ class Keyboard:
          a s d f g h j k l
            z x c v b n m
 
+
         pre: `color_word` function is defined, accepting a color and a letter, and
              returning the letter wrapped in ANSI color codes.
         post: Returns a formatted string with each letter colored according to feedback
               and arranged to match a typical keyboard layout.
         """
+        s_return =""
+        for j,string in enumerate(self.rows):
+            for i,char in enumerate(string):
+                color = self.colors[char]
+                s_return += color_word(color,char)
+                if i < len(string) -1:
+                    s_return += " "
+            if j < len(self.rows) - 1:
+                s_return += "\n "
+                if j == 1:
+                    s_return += "  "
 
-        return ""
+        return s_return
 
 
 class WordFamily:
@@ -161,7 +166,6 @@ class WordFamily:
 
     COLOR_DIFFICULTY = {CORRECT_COLOR: 0, WRONG_SPOT_COLOR: 1, NOT_IN_WORD_COLOR: 2}
 
-    # TODO: Modify this method. You may delete this comment when you are done.
     def __init__(self, feedback_colors, words):
         """
         Initializes the WordFamily instance with a feedback color list and a list of corresponding
@@ -179,7 +183,8 @@ class WordFamily:
         self.feedback_colors = feedback_colors
         self.words = words
         self.difficulty = 0
-        # TODO: implement the difficulty calculation here.
+        for color in self.feedback_colors:
+            self.difficulty += self.COLOR_DIFFICULTY[color]
 
     # TODO: Modify this method. You may delete this comment when you are done.
     def __lt__(self, other):
@@ -202,13 +207,10 @@ class WordFamily:
         post: Returns a boolean result of the comparison, raises NotImplementedError
               if `other` is not a WordFamily instance.
         """
-        try:
-            return False
-        except:
-            raise NotImplementedError(
-                "< operator only valid for WordFamily comparisons."
-            )
+        if type(other) is not type(self):
+            raise NotImplementedError("< operator only valid for WordFamily comparisons.")
 
+        return self.difficulty <= other.difficulty and len(self.words) <= len(other.words)
     # DO NOT change this method.
     # You should use this for debugging!
     def __str__(self):
