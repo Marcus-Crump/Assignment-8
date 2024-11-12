@@ -19,9 +19,6 @@ UT EID 2:
 import random
 import sys
 
-# You may delete this import if you choose not to use this.
-from collections import defaultdict
-
 # ANSI escape codes for text color
 # These must be used by wrapping it around a single character string
 # for the test cases to work. Please use the color_word function to format
