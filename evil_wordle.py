@@ -459,8 +459,7 @@ def get_feedback(remaining_secret_words, guessed_word):
     null_color = [CORRECT_COLOR] * 5
     hardest = WordFamily(null_color, [])
     for fam in wf_dict.values():
-        if hardest > fam:
-            hardest = fam
+        hardest = min(hardest, fam)
 
     remaining_secret_words = hardest.words
     feedback_colors = tuple(
