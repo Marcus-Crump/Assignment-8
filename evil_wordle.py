@@ -92,18 +92,20 @@ class Keyboard:
         """
         char_dict = {}
 
-        for i,char in enumerate(guessed_word):
+        for i, char in enumerate(guessed_word):
             if char not in char_dict:
                 char_dict[char] = feedback_colors[i]
             else:
                 if feedback_colors[i] == CORRECT_COLOR:
                     char_dict[char] = feedback_colors[i]
                 else:
-                    if (char_dict[char] != CORRECT_COLOR
-                    and char_dict[char] != WRONG_SPOT_COLOR):
+                    if (
+                        char_dict[char] != CORRECT_COLOR
+                        and char_dict[char] != WRONG_SPOT_COLOR
+                    ):
                         char_dict[char] = feedback_colors[i]
 
-        for key,val in char_dict.items():
+        for key, val in char_dict.items():
             if self.colors[key] != CORRECT_COLOR:
                 if val == CORRECT_COLOR:
                     self.colors[key] = val
@@ -134,12 +136,12 @@ class Keyboard:
         post: Returns a formatted string with each letter colored according to feedback
               and arranged to match a typical keyboard layout.
         """
-        s_return =""
-        for j,string in enumerate(self.rows):
-            for i,char in enumerate(string):
+        s_return = ""
+        for j, string in enumerate(self.rows):
+            for i, char in enumerate(string):
                 color = self.colors[char]
-                s_return += color_word(color,char)
-                if i < len(string) -1:
+                s_return += color_word(color, char)
+                if i < len(string) - 1:
                     s_return += " "
             if j < len(self.rows) - 1:
                 s_return += "\n "
@@ -186,7 +188,6 @@ class WordFamily:
         for color in self.feedback_colors:
             self.difficulty += self.COLOR_DIFFICULTY[color]
 
-    # TODO: Modify this method. You may delete this comment when you are done.
     def __lt__(self, other):
         """
         Compares this WordFamily object with another by prioritizing a larger
@@ -208,9 +209,18 @@ class WordFamily:
               if `other` is not a WordFamily instance.
         """
         if type(other) is not type(self):
-            raise NotImplementedError("< operator only valid for WordFamily comparisons.")
+            raise NotImplementedError(
+                "< operator only valid for WordFamily comparisons."
+            )
 
-        return self.difficulty <= other.difficulty and len(self.words) <= len(other.words)
+        if len(self.words) != len(other.words):
+            return len(self.words) > len(other.words)
+
+        if self.difficulty != other.difficulty:
+            return self.difficulty > other.difficulty
+
+        return self.feedback_colors < other.feedback_colors
+
     # DO NOT change this method.
     # You should use this for debugging!
     def __str__(self):
@@ -337,7 +347,6 @@ def prepare_game():
     return attempts, valid_words
 
 
-# TODO: Modify this function. You may delete this comment when you are done.
 def fast_sort(lst):
     """
     Returns a new list with the same elements as lst sorted in ascending order. You MUST implement
@@ -359,7 +368,7 @@ def fast_sort(lst):
         i, l, r = 0, 0, 0
 
         while l < len(left) and r < len(right):
-            if left[l] <= right[r]:
+            if left[l] < right[r]:
                 lst[i] = left[l]
                 l += 1
             else:
@@ -380,7 +389,6 @@ def fast_sort(lst):
     return lst[:]
 
 
-# TODO: Modify this helper function. You may delete this comment when you are done.
 def get_feedback_colors(secret_word, guessed_word):
     """
     Processes the guess and generates the colored feedback based on the potential secret word. This
@@ -398,16 +406,31 @@ def get_feedback_colors(secret_word, guessed_word):
             length 5 with the ANSI coloring in each index as the returned value.
     """
     feedback = [None] * NUM_LETTERS
+    char_freq = {}
 
-    # Modify this! This is just starter code.
-    for i in range(NUM_LETTERS):
-        feedback[i] = WRONG_SPOT_COLOR
+    for char in secret_word:
+        if char not in char_freq:
+            char_freq[char] = 1
+        else:
+            char_freq[char] += 1
+
+    for i, char in enumerate(guessed_word):
+        if char == secret_word[i]:
+            feedback[i] = CORRECT_COLOR
+            char_freq[char] -= 1
+        elif char in secret_word and char_freq[char] > 0:
+            feedback[i] = WRONG_SPOT_COLOR
+            char_freq[char] -= 1
+
+    for i, val in enumerate(feedback):
+        char = guessed_word[i]
+        if val is None or (val == WRONG_SPOT_COLOR and char_freq[char] < 0):
+            feedback[i] = NOT_IN_WORD_COLOR
 
     # You do not have to change this return statement
     return feedback
 
 
-# TODO: Modify this function. You may delete this comment when you are done.
 def get_feedback(remaining_secret_words, guessed_word):
     """
     Processes the guess and generates the colored feedback based on the hardest word family. Use
@@ -427,7 +450,25 @@ def get_feedback(remaining_secret_words, guessed_word):
             3. Lexicographical ordering of the feedback (ASCII value comparisons)
     """
     # Modify this! This is just starter code.
-    feedback_colors = get_feedback_colors(remaining_secret_words[0], guessed_word)
+    wf_dict = {}
+    for i, word in enumerate(remaining_secret_words):
+        pattern = get_feedback_colors(word, guessed_word)
+        if str(pattern) not in wf_dict:
+            wf_dict[str(pattern)] = WordFamily(pattern, [])
+            for w in remaining_secret_words[i:]:
+                pat = get_feedback_colors(w, guessed_word)
+                if pat == pattern:
+                    wf_dict[str(pattern)].words.append(w)
+    null_color = [CORRECT_COLOR] * 5
+    hardest = WordFamily(null_color, [])
+    for fam in wf_dict.values():
+        if hardest > fam:
+            hardest = fam
+
+    remaining_secret_words = hardest.words
+    feedback_colors = tuple(
+        get_feedback_colors(remaining_secret_words[0], guessed_word)
+    )
 
     return feedback_colors, remaining_secret_words
 
